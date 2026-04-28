@@ -9,9 +9,14 @@ spring:
     gateway:
       routes:
         - id: product-service
-          uri: lb://product-service
+          uri: lb://PRODUCT-SERVICE
           predicates:
             - Path=/api/products/**
+
+        - id: cart-service
+          uri: lb://CART-SERVICE
+          predicates:
+            - Path=/api/carts/**
 
 eureka:
   client:
