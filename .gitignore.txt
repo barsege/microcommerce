@@ -1,0 +1,13 @@
+target/
+*.log
+*.class
+*.jar
+
+.idea/
+.vscode/
+.metadata/
+
+node_modules/
+dist/
+
+.env
