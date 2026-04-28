@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: microcommerce-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: product_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microcommerce-network
+
+volumes:
+  postgres_data:
+
+networks:
+  microcommerce-network:
+    driver: bridge
