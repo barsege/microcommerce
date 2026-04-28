@@ -11,5 +11,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: microcommerce-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
 volumes:
   postgres_data:

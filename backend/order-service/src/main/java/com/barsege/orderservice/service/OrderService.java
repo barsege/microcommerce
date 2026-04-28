@@ -5,7 +5,10 @@ import com.barsege.orderservice.dto.request.CreateOrderRequest;
 import com.barsege.orderservice.dto.response.OrderResponse;
 import com.barsege.orderservice.entity.Order;
 import com.barsege.orderservice.entity.OrderItem;
+import com.barsege.orderservice.event.OrderCreatedEvent;
+import com.barsege.orderservice.event.OrderCreatedItemEvent;
 import com.barsege.orderservice.mapper.OrderMapper;
+import com.barsege.orderservice.messaging.OrderEventPublisher;
 import com.barsege.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderEventPublisher orderEventPublisher;
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -39,6 +43,23 @@ public class OrderService {
         order.setTotalAmount(totalAmount);
 
         Order savedOrder = orderRepository.save(order);
+        
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                savedOrder.getId(),
+                savedOrder.getUserId(),
+                savedOrder.getTotalAmount(),
+                savedOrder.getItems()
+                        .stream()
+                        .map(item -> new OrderCreatedItemEvent(
+                                item.getProductId(),
+                                item.getProductName(),
+                                item.getUnitPrice(),
+                                item.getQuantity()
+                        ))
+                        .toList()
+        );
+
+        orderEventPublisher.publishOrderCreated(event);
 
         return OrderMapper.toResponse(savedOrder);
     }

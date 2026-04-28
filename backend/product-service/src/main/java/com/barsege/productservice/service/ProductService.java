@@ -5,6 +5,8 @@ import com.barsege.productservice.dto.response.ProductResponse;
 import com.barsege.productservice.entity.Product;
 import com.barsege.productservice.mapper.ProductMapper;
 import com.barsege.productservice.repository.ProductRepository;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,5 +45,20 @@ public class ProductService {
         Product savedProduct = productRepository.save(product);
 
         return ProductMapper.toResponse(savedProduct);
+    }
+    
+    @Transactional
+    public void reserveStock(Long productId, Integer quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+
+        int availableStock = product.getStock() - product.getReservedStock();
+
+        if (availableStock < quantity) {
+            throw new IllegalArgumentException("Insufficient stock for product: " + productId);
+        }
+
+        product.setReservedStock(product.getReservedStock() + quantity);
+        productRepository.save(product);
     }
 }
