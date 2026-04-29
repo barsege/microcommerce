@@ -1,4 +1,4 @@
-package com.barsege.paymentservice.event;
+package com.barsege.productservice.event;
 
 import java.math.BigDecimal;
 import java.util.List;

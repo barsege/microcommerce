@@ -79,4 +79,26 @@ public class ProductService {
         product.setReservedStock(newReservedStock);
         productRepository.save(product);
     }
+    
+    @Transactional
+    public void confirmStock(Long productId, Integer quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+
+        int newStock = product.getStock() - quantity;
+        int newReservedStock = product.getReservedStock() - quantity;
+
+        if (newStock < 0) {
+            throw new IllegalArgumentException("Stock cannot be negative for product: " + productId);
+        }
+
+        if (newReservedStock < 0) {
+            newReservedStock = 0;
+        }
+
+        product.setStock(newStock);
+        product.setReservedStock(newReservedStock);
+
+        productRepository.save(product);
+    }
 }

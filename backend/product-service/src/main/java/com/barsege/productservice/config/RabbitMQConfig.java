@@ -22,6 +22,9 @@ public class RabbitMQConfig {
     public static final String PAYMENT_EXCHANGE = "payment.exchange";
     public static final String PAYMENT_FAILED_QUEUE = "product.payment-failed.queue";
     public static final String PAYMENT_FAILED_ROUTING_KEY = "payment.failed";
+    
+    public static final String PAYMENT_COMPLETED_QUEUE = "product.payment-completed.queue";
+    public static final String PAYMENT_COMPLETED_ROUTING_KEY = "payment.completed";
 
     @Bean
     public TopicExchange orderExchange() {
@@ -88,5 +91,18 @@ public class RabbitMQConfig {
                 .bind(paymentFailedQueue())
                 .to(paymentExchange())
                 .with(PAYMENT_FAILED_ROUTING_KEY);
+    }
+    
+    @Bean
+    public Queue paymentCompletedQueue() {
+        return QueueBuilder.durable(PAYMENT_COMPLETED_QUEUE).build();
+    }
+
+    @Bean
+    public Binding paymentCompletedBinding() {
+        return BindingBuilder
+                .bind(paymentCompletedQueue())
+                .to(paymentExchange())
+                .with(PAYMENT_COMPLETED_ROUTING_KEY);
     }
 }

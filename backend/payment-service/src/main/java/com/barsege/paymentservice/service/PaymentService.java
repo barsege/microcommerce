@@ -21,8 +21,8 @@ public class PaymentService {
     private final PaymentEventPublisher paymentEventPublisher;
 
     public void processPayment(StockReservedEvent event) {
-        boolean paymentSuccess = event.orderId() % 2 == 0;
-        // boolean paymentSuccess = false;
+        // boolean paymentSuccess = event.orderId() % 2 == 0;
+        boolean paymentSuccess = true;
         
         if (paymentSuccess) {
             Payment payment = Payment.builder()
@@ -39,7 +39,8 @@ public class PaymentService {
                     new PaymentCompletedEvent(
                             event.orderId(),
                             event.userId(),
-                            BigDecimal.ZERO
+                            BigDecimal.ZERO,
+                            event.items()
                     )
             );
         } else {
