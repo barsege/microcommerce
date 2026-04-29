@@ -18,6 +18,10 @@ public class RabbitMQConfig {
     public static final String STOCK_EXCHANGE = "stock.exchange";
     public static final String STOCK_RESERVED_ROUTING_KEY = "stock.reserved";
     public static final String STOCK_RESERVATION_FAILED_ROUTING_KEY = "stock.reservation.failed";
+    
+    public static final String PAYMENT_EXCHANGE = "payment.exchange";
+    public static final String PAYMENT_FAILED_QUEUE = "product.payment-failed.queue";
+    public static final String PAYMENT_FAILED_ROUTING_KEY = "payment.failed";
 
     @Bean
     public TopicExchange orderExchange() {
@@ -66,5 +70,23 @@ public class RabbitMQConfig {
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(messageConverter);
         return factory;
+    }
+    
+    @Bean
+    public TopicExchange paymentExchange() {
+        return new TopicExchange(PAYMENT_EXCHANGE);
+    }
+
+    @Bean
+    public Queue paymentFailedQueue() {
+        return QueueBuilder.durable(PAYMENT_FAILED_QUEUE).build();
+    }
+
+    @Bean
+    public Binding paymentFailedBinding() {
+        return BindingBuilder
+                .bind(paymentFailedQueue())
+                .to(paymentExchange())
+                .with(PAYMENT_FAILED_ROUTING_KEY);
     }
 }

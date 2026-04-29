@@ -1,10 +1,6 @@
-package com.barsege.orderservice.config;
+package com.barsege.paymentservice.config;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -15,20 +11,17 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String ORDER_EXCHANGE = "order.exchange";
-    public static final String ORDER_CREATED_ROUTING_KEY = "order.created";
+    public static final String STOCK_EXCHANGE = "stock.exchange";
+    public static final String STOCK_RESERVED_QUEUE = "payment.stock-reserved.queue";
+    public static final String STOCK_RESERVED_ROUTING_KEY = "stock.reserved";
 
     public static final String PAYMENT_EXCHANGE = "payment.exchange";
-
-    public static final String PAYMENT_COMPLETED_QUEUE = "order.payment-completed.queue";
-    public static final String PAYMENT_FAILED_QUEUE = "order.payment-failed.queue";
-
     public static final String PAYMENT_COMPLETED_ROUTING_KEY = "payment.completed";
     public static final String PAYMENT_FAILED_ROUTING_KEY = "payment.failed";
 
     @Bean
-    public TopicExchange orderExchange() {
-        return new TopicExchange(ORDER_EXCHANGE);
+    public TopicExchange stockExchange() {
+        return new TopicExchange(STOCK_EXCHANGE);
     }
 
     @Bean
@@ -37,29 +30,16 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue paymentCompletedQueue() {
-        return QueueBuilder.durable(PAYMENT_COMPLETED_QUEUE).build();
+    public Queue stockReservedQueue() {
+        return QueueBuilder.durable(STOCK_RESERVED_QUEUE).build();
     }
 
     @Bean
-    public Queue paymentFailedQueue() {
-        return QueueBuilder.durable(PAYMENT_FAILED_QUEUE).build();
-    }
-
-    @Bean
-    public Binding paymentCompletedBinding() {
+    public Binding stockReservedBinding() {
         return BindingBuilder
-                .bind(paymentCompletedQueue())
-                .to(paymentExchange())
-                .with(PAYMENT_COMPLETED_ROUTING_KEY);
-    }
-
-    @Bean
-    public Binding paymentFailedBinding() {
-        return BindingBuilder
-                .bind(paymentFailedQueue())
-                .to(paymentExchange())
-                .with(PAYMENT_FAILED_ROUTING_KEY);
+                .bind(stockReservedQueue())
+                .to(stockExchange())
+                .with(STOCK_RESERVED_ROUTING_KEY);
     }
 
     @Bean

@@ -2,6 +2,7 @@ package com.barsege.productservice.messaging;
 
 import com.barsege.productservice.config.RabbitMQConfig;
 import com.barsege.productservice.event.OrderCreatedEvent;
+import com.barsege.productservice.event.StockItemEvent;
 import com.barsege.productservice.event.StockReservationFailedEvent;
 import com.barsege.productservice.event.StockReservedEvent;
 import com.barsege.productservice.service.ProductService;
@@ -24,7 +25,13 @@ public class OrderCreatedEventListener {
             );
 
             stockEventPublisher.publishStockReserved(
-                    new StockReservedEvent(event.orderId(), event.userId())
+                    new StockReservedEvent(event.orderId(), event.userId(), event.items()
+                            .stream()
+                            .map(item -> new StockItemEvent(
+                                    item.productId(),
+                                    item.quantity()
+                            ))
+                            .toList())
             );
 
         } catch (Exception exception) {
