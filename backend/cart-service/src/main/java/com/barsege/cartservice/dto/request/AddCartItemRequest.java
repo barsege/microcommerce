@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record AddCartItemRequest(
-        @NotBlank String userId,
+        String userId,
         @NotNull Long productId,
         @NotBlank String productName,
         @NotNull BigDecimal unitPrice,

@@ -17,12 +17,19 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        
+
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8089/realms/microcommerce
+          jwk-set-uri: http://localhost:8089/realms/microcommerce/protocol/openid-connect/certs
 
 eureka:
   client:

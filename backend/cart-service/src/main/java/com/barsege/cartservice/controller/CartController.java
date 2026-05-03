@@ -1,10 +1,15 @@
 package com.barsege.cartservice.controller;
 
 import com.barsege.cartservice.dto.request.AddCartItemRequest;
+import com.barsege.cartservice.dto.request.UpdateCartItemQuantityRequest;
 import com.barsege.cartservice.dto.response.CartResponse;
 import com.barsege.cartservice.service.CartService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,26 +19,40 @@ public class CartController {
 
     private final CartService cartService;
 
+    @Operation(summary = "Add item to authenticated user's cart", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/items")
-    public CartResponse addItem(@Valid @RequestBody AddCartItemRequest request) {
-        return cartService.addItem(request);
+    public CartResponse addItem(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AddCartItemRequest request) {
+        return cartService.addItem(jwt.getSubject(), request);
     }
 
-    @GetMapping("/{userId}")
-    public CartResponse getCart(@PathVariable("userId") String userId) {
-        return cartService.getCart(userId);
+    @Operation(summary = "Get authenticated user's cart", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping
+    public CartResponse getCart(@AuthenticationPrincipal Jwt jwt) {
+        return cartService.getCart(jwt.getSubject());
     }
 
-    @DeleteMapping("/{userId}/items/{productId}")
+    @Operation(summary = "Update item quantity in authenticated user's cart", security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping("/items/{productId}")
+    public CartResponse updateItemQuantity(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable("productId") Long productId,
+            @Valid @RequestBody UpdateCartItemQuantityRequest request
+    ) {
+        return cartService.updateItemQuantity(jwt.getSubject(), productId, request.quantity());
+    }
+
+    @Operation(summary = "Remove item from authenticated user's cart", security = @SecurityRequirement(name = "bearerAuth"))
+    @DeleteMapping("/items/{productId}")
     public CartResponse removeItem(
-            @PathVariable("userId") String userId,
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable("productId") Long productId
     ) {
-        return cartService.removeItem(userId, productId);
+        return cartService.removeItem(jwt.getSubject(), productId);
     }
 
-    @DeleteMapping("/{userId}")
-    public void clearCart(@PathVariable("userId") String userId) {
-        cartService.clearCart(userId);
+    @Operation(summary = "Clear authenticated user's cart", security = @SecurityRequirement(name = "bearerAuth"))
+    @DeleteMapping
+    public void clearCart(@AuthenticationPrincipal Jwt jwt) {
+        cartService.clearCart(jwt.getSubject());
     }
 }

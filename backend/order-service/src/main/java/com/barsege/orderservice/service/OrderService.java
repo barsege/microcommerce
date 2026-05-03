@@ -26,8 +26,12 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
+        return createOrder(request.userId(), request);
+    }
+
+    public OrderResponse createOrder(String userId, CreateOrderRequest request) {
         Order order = Order.builder()
-                .userId(request.userId())
+                .userId(userId)
                 .build();
 
         List<OrderItem> orderItems = request.items()
@@ -67,6 +71,17 @@ public class OrderService {
     public OrderResponse getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
+        return OrderMapper.toResponse(order);
+    }
+
+    public OrderResponse getOrderById(Long orderId, String userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
+        if (!order.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Order not found: " + orderId);
+        }
 
         return OrderMapper.toResponse(order);
     }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,10 +20,10 @@ public class CartService {
     private final CartRepository cartRepository;
 
     @Transactional
-    public CartResponse addItem(AddCartItemRequest request) {
-        Cart cart = cartRepository.findByUserId(request.userId())
+    public CartResponse addItem(String userId, AddCartItemRequest request) {
+        Cart cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> Cart.builder()
-                        .userId(request.userId())
+                        .userId(userId)
                         .build());
 
         CartItem existingItem = cart.getItems()
@@ -51,10 +52,25 @@ public class CartService {
     }
 
     public CartResponse getCart(String userId) {
+        return cartRepository.findByUserId(userId)
+                .map(CartMapper::toResponse)
+                .orElseGet(() -> new CartResponse(null, userId, List.of(), BigDecimal.ZERO));
+    }
+
+    @Transactional
+    public CartResponse updateItemQuantity(String userId, Long productId, Integer quantity) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + userId));
 
-        return CartMapper.toResponse(cart);
+        CartItem item = cart.getItems()
+                .stream()
+                .filter(cartItem -> cartItem.getProductId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Cart item not found for product: " + productId));
+
+        item.updateQuantity(quantity);
+        Cart savedCart = cartRepository.save(cart);
+        return CartMapper.toResponse(savedCart);
     }
 
     @Transactional

@@ -18,5 +18,15 @@ services:
       - "5672:5672"
       - "15672:15672"
 
+  keycloak:
+    image: quay.io/keycloak/keycloak
+    container_name: microcommerce-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8089:8080"
+
 volumes:
   postgres_data:

@@ -28,3 +28,22 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+payment:
+  provider: iyzico
+  currency: TRY
+  payment-method: IYZICO
+  default-amount: 1.00
+  mock:
+    force-failure: false
+
+iyzico:
+  api-key: ${IYZICO_API_KEY:dummy}
+  secret-key: ${IYZICO_SECRET_KEY:dummy}
+  base-url: ${IYZICO_BASE_URL:https://sandbox-api.iyzipay.com}
+  test-card:
+    holder-name: John Doe
+    number: 5528790000000008
+    expire-month: 12
+    expire-year: 2030
+    cvc: 123

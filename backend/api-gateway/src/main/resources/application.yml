@@ -9,11 +9,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Keycloak example:
-          # issuer-uri: http://localhost:8085/realms/microcommerce
-          # jwk-set-uri: http://localhost:8085/realms/microcommerce/protocol/openid-connect/certs
-          issuer-uri: http://localhost:8085/realms/microcommerce
-          jwk-set-uri: http://localhost:8085/realms/microcommerce/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8089/realms/microcommerce
+          jwk-set-uri: http://localhost:8089/realms/microcommerce/protocol/openid-connect/certs
 
   cloud:
     gateway:
