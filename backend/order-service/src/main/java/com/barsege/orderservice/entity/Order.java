@@ -3,9 +3,11 @@ package com.barsege.orderservice.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -38,6 +40,9 @@ public class Order {
     private String userId;
 
     private BigDecimal totalAmount;
+    
+    @Column(nullable = false, length = 3)
+    private Currency currency;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status;

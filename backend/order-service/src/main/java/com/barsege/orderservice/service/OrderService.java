@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.List;
 
 @Service
@@ -45,12 +46,14 @@ public class OrderService {
 
         order.setItems(orderItems);
         order.setTotalAmount(totalAmount);
+        order.setCurrency(Currency.getInstance("TRY"));
 
         Order savedOrder = orderRepository.save(order);
         
         OrderCreatedEvent event = new OrderCreatedEvent(
                 savedOrder.getId(),
                 savedOrder.getUserId(),
+                savedOrder.getCurrency().getCurrencyCode(),
                 savedOrder.getTotalAmount(),
                 savedOrder.getItems()
                         .stream()

@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Currency;
 
 @Getter
 @Setter
@@ -24,6 +25,11 @@ public class Payment {
     private String userId;
 
     private BigDecimal amount;
+    
+    @Column(nullable = false, length = 3)
+    private Currency currency;
+    
+    private String providerTransactionId;
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
@@ -34,6 +40,8 @@ public class Payment {
     private String failureReason;
 
     private LocalDateTime createdAt;
+    
+    private LocalDateTime completedAt;
 
     @PrePersist
     void prePersist() {
