@@ -15,7 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Currency;
 
 @Service
 @RequiredArgsConstructor
@@ -26,22 +27,15 @@ public class PaymentService {
     private final PaymentEventPublisher paymentEventPublisher;
     private final PaymentProvider paymentProvider;
 
-    @Value("${payment.currency:TRY}")
-    private String currency;
-
     @Value("${payment.payment-method:MOCK}")
     private String paymentMethod;
 
-    @Value("${payment.default-amount:1.00}")
-    private BigDecimal defaultAmount;
-
     public void processPayment(StockReservedEvent event) {
-        BigDecimal amount = defaultAmount;
         PaymentRequest request = new PaymentRequest(
                 event.orderId(),
                 event.userId(),
-                amount,
-                currency,
+                event.totalAmount(),
+                event.currencyCode(),
                 paymentMethod,
                 null,
                 null,
@@ -49,44 +43,53 @@ public class PaymentService {
                 null,
                 null
         );
+        
+        Payment payment = Payment.builder()
+                .orderId(event.orderId())
+                .userId(event.userId())
+                .amount(event.totalAmount())
+                .currency(Currency.getInstance(event.currencyCode()))
+                .provider(paymentProvider.providerType())
+                .status(PaymentStatus.PENDING)
+                .build();
+
+        
+        payment = paymentRepository.save(payment);
+        
         PaymentResult result;
         try {
             result = paymentProvider.pay(request);
         } catch (Exception exception) {
             log.error("Payment provider failed. orderId={}", event.orderId(), exception);
-            result = new PaymentResult(false, null, "Payment provider error: " + exception.getMessage());
+            payment.setStatus(PaymentStatus.UNKNOWN);
+            payment.setFailureReason("Payment provider error: " + exception.getMessage());
+            paymentRepository.save(payment);            
+            return;
         }
         
         if (result.success()) {
-            Payment payment = Payment.builder()
-                    .orderId(event.orderId())
-                    .userId(event.userId())
-                    .amount(amount)
-                    .status(PaymentStatus.SUCCESS)
-                    .provider(paymentProvider.providerType())
-                    .build();
-
+        	
+        	payment.setStatus(PaymentStatus.SUCCESS);
+        	payment.setProviderTransactionId(result.transactionId());
+        	payment.setCompletedAt(LocalDateTime.now());
+            
             paymentRepository.save(payment);
 
             paymentEventPublisher.publishPaymentCompleted(
                     new PaymentCompletedEvent(
                             event.orderId(),
                             event.userId(),
-                            amount,
+                            event.totalAmount(),
                             event.items()
                     )
             );
         } else {
             String reason = result.failureReason();
 
-            Payment payment = Payment.builder()
-                    .orderId(event.orderId())
-                    .userId(event.userId())
-                    .amount(amount)
-                    .status(PaymentStatus.FAILED)
-                    .provider(paymentProvider.providerType())
-                    .failureReason(reason)
-                    .build();
+            payment.setStatus(PaymentStatus.FAILED);
+        	payment.setProviderTransactionId(result.transactionId());
+        	payment.setCompletedAt(LocalDateTime.now());
+        	payment.setFailureReason(reason);
 
             paymentRepository.save(payment);
 

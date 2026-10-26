@@ -7,6 +7,7 @@ public record OrderCreatedEvent(
         Long orderId,
         String userId,
         BigDecimal totalAmount,
+        String currencyCode,
         List<OrderCreatedItemEvent> items
 ) {
 }

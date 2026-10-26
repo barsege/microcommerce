@@ -2,6 +2,7 @@ package com.barsege.paymentservice.service;
 
 import com.barsege.paymentservice.dto.PaymentResult;
 import com.barsege.paymentservice.entity.Payment;
+import com.barsege.paymentservice.entity.PaymentStatus;
 import com.barsege.paymentservice.event.PaymentCompletedEvent;
 import com.barsege.paymentservice.event.PaymentFailedEvent;
 import com.barsege.paymentservice.event.StockReservedEvent;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,10 +38,9 @@ class PaymentServiceTest {
         paymentEventPublisher = mock(PaymentEventPublisher.class);
         paymentProvider = mock(PaymentProvider.class);
         paymentService = new PaymentService(paymentRepository, paymentEventPublisher, paymentProvider);
-        ReflectionTestUtils.setField(paymentService, "currency", "TRY");
         ReflectionTestUtils.setField(paymentService, "paymentMethod", "MOCK");
-        ReflectionTestUtils.setField(paymentService, "defaultAmount", BigDecimal.ONE);
         when(paymentProvider.providerType()).thenReturn(com.barsege.paymentservice.entity.PaymentProvider.FAKE);
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
@@ -48,7 +49,7 @@ class PaymentServiceTest {
 
         paymentService.processPayment(stockReservedEvent());
 
-        verify(paymentRepository).save(any(Payment.class));
+        verify(paymentRepository, times(2)).save(any(Payment.class));
         verify(paymentEventPublisher).publishPaymentCompleted(any(PaymentCompletedEvent.class));
         verify(paymentEventPublisher, never()).publishPaymentFailed(any(PaymentFailedEvent.class));
     }
@@ -60,26 +61,50 @@ class PaymentServiceTest {
         paymentService.processPayment(stockReservedEvent());
 
         ArgumentCaptor<PaymentFailedEvent> eventCaptor = ArgumentCaptor.forClass(PaymentFailedEvent.class);
-        verify(paymentRepository).save(any(Payment.class));
+        verify(paymentRepository, times(2)).save(any(Payment.class));
         verify(paymentEventPublisher).publishPaymentFailed(eventCaptor.capture());
         verify(paymentEventPublisher, never()).publishPaymentCompleted(any(PaymentCompletedEvent.class));
         assertThat(eventCaptor.getValue().reason()).isEqualTo("declined");
     }
-
+    
     @Test
-    void shouldPublishFailedEventWhenProviderThrowsException() {
-        when(paymentProvider.pay(any())).thenThrow(new RuntimeException("provider unavailable"));
+    void shouldMarkPaymentUnknownWhenProviderThrowsException() {
+        when(paymentProvider.pay(any()))
+                .thenThrow(new RuntimeException("provider unavailable"));
 
         paymentService.processPayment(stockReservedEvent());
 
-        ArgumentCaptor<PaymentFailedEvent> eventCaptor = ArgumentCaptor.forClass(PaymentFailedEvent.class);
-        verify(paymentRepository).save(any(Payment.class));
-        verify(paymentEventPublisher).publishPaymentFailed(eventCaptor.capture());
-        verify(paymentEventPublisher, never()).publishPaymentCompleted(any(PaymentCompletedEvent.class));
-        assertThat(eventCaptor.getValue().reason()).contains("provider unavailable");
+        ArgumentCaptor<Payment> paymentCaptor =
+                ArgumentCaptor.forClass(Payment.class);
+
+        verify(paymentRepository, times(2))
+                .save(paymentCaptor.capture());
+
+        Payment savedPayment = paymentCaptor.getValue();
+
+        assertThat(savedPayment.getStatus())
+                .isEqualTo(PaymentStatus.UNKNOWN);
+
+        assertThat(savedPayment.getFailureReason())
+                .contains("provider unavailable");
+
+        assertThat(savedPayment.getCompletedAt())
+                .isNull();
+
+        verify(paymentEventPublisher, never())
+                .publishPaymentFailed(any(PaymentFailedEvent.class));
+
+        verify(paymentEventPublisher, never())
+                .publishPaymentCompleted(any(PaymentCompletedEvent.class));
     }
 
     private StockReservedEvent stockReservedEvent() {
-        return new StockReservedEvent(10L, "user-1", List.of());
+        return new StockReservedEvent(
+                10L,
+                "user-1",
+                BigDecimal.valueOf(100),
+                "TRY",
+                List.of()
+        );
     }
 }

@@ -25,7 +25,8 @@ public class OrderCreatedEventListener {
             );
 
             stockEventPublisher.publishStockReserved(
-                    new StockReservedEvent(event.orderId(), event.userId(), event.items()
+                    new StockReservedEvent(event.orderId(), event.userId(), event.totalAmount(), 
+                    		event.currencyCode(), event.items()
                             .stream()
                             .map(item -> new StockItemEvent(
                                     item.productId(),

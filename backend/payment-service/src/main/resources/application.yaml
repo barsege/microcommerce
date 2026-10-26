@@ -31,11 +31,7 @@ eureka:
 
 payment:
   provider: iyzico
-  currency: TRY
   payment-method: IYZICO
-  default-amount: 1.00
-  mock:
-    force-failure: false
 
 iyzico:
   api-key: ${IYZICO_API_KEY:dummy}
